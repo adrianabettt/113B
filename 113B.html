@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decifre a Mensagem Secreta!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Fredoka', sans-serif;
+    background: linear-gradient(160deg, #EEF6FF 0%, #F9F0FF 100%);
+    display: flex; flex-direction: column; align-items: center;
+    height: 100vh; padding: 10px 14px 10px; gap: 8px;
+  }
+
+  /* ── Header ── */
+  .header { text-align: center; flex-shrink: 0; }
+  .header h1 { font-size: clamp(1.1rem,2.8vw,1.7rem); font-weight:700; color:#5B21B6; text-shadow:0 2px 0 rgba(255,255,255,0.9); }
+  .header p  { font-size: clamp(0.7rem,1.7vw,0.86rem); color:#7C3AED; font-weight:600; }
+
+  /* ── Progress ── */
+  .progress-wrap { width:100%; max-width:640px; flex-shrink:0; display:flex; align-items:center; gap:10px; }
+  .progress-bar-bg { flex:1; height:11px; background:rgba(255,255,255,0.6); border-radius:20px; overflow:hidden; box-shadow:inset 0 2px 4px rgba(0,0,0,0.08); }
+  .progress-bar-fill { height:100%; background:linear-gradient(90deg,#A855F7,#7C3AED); border-radius:20px; width:0%; transition:width 0.5s ease; }
+  .progress-label { font-size:clamp(0.68rem,1.7vw,0.82rem); font-weight:700; color:#7C3AED; white-space:nowrap; flex-shrink:0; }
+
+  /* ── Stage ── */
+  .stage { flex:1; min-height:0; width:100%; max-width:640px; display:flex; flex-direction:column; gap:8px; align-items:center; }
+
+  /* ── Section labels ── */
+  .sec-label {
+    font-size: clamp(0.8rem,2vw,0.98rem); font-weight:700;
+    color:#5B21B6; text-align:center; text-transform:uppercase;
+    letter-spacing:0.08em; flex-shrink:0; align-self:flex-start;
+    width:100%;
+  }
+
+  /* ── Cipher table ── */
+  .cipher-table {
+    background: #EEF2FF; border-radius:18px;
+    padding: 10px 14px; flex-shrink:0;
+    display: flex; gap: 10px; justify-content: center; align-items: center;
+    width: 100%;
+  }
+  .cipher-card {
+    background: white; border-radius: 14px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.07), 0 1px 10px rgba(0,0,0,0.06);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; padding: 8px 12px; min-width: 58px; flex:1; max-width:90px;
+    border: 2px solid #DDD6FE;
+  }
+  .cipher-emoji  { font-size: clamp(1.8rem,5vw,2.8rem); line-height:1; }
+  .cipher-letter { font-size: clamp(1.1rem,2.8vw,1.5rem); font-weight:700; color:#4C1D95; }
+
+  /* ── Secret row ── */
+  .secret-row {
+    background: #FCE7F3; border-radius:18px;
+    padding: 10px 18px; flex-shrink:0;
+    display: flex; gap: 12px; justify-content: center; align-items: center;
+    width: 100%;
+  }
+  .secret-emoji { font-size: clamp(2rem,7vw,3.5rem); line-height:1; }
+
+  /* ── Input area ── */
+  .input-area {
+    display:flex; flex-direction:column; align-items:center;
+    gap:10px; flex-shrink:0; width:100%;
+  }
+
+  .answer-input {
+    width: 100%;
+    padding: 12px 20px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: clamp(1.1rem,3vw,1.5rem);
+    font-weight: 700; color: #4C1D95;
+    text-align: center; text-transform: uppercase;
+    border: 3px solid #DDD6FE; border-radius: 16px;
+    background: white; outline: none;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.06);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.18em;
+  }
+  .answer-input:focus {
+    border-color: #A855F7;
+    box-shadow: 0 0 0 4px rgba(168,85,247,0.2), 0 4px 0 rgba(0,0,0,0.06);
+  }
+  .answer-input::placeholder { color:#C4B5FD; font-weight:600; letter-spacing:0.06em; }
+  .answer-input:disabled { background:#F5F3FF; }
+
+  /* ── Verify button ── */
+  .btn-verify {
+    background: linear-gradient(135deg,#22C55E,#15803D);
+    color: white; border: none; border-radius: 50px;
+    padding: 13px 52px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: clamp(1rem,2.6vw,1.25rem); font-weight:700;
+    cursor: pointer; box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+    transition: transform 0.12s, box-shadow 0.12s;
+    width: 100%;
+  }
+  .btn-verify:hover { transform:translateY(-2px); box-shadow:0 7px 0 rgba(0,0,0,0.15); }
+  .btn-verify:active { transform:translateY(1px); box-shadow:0 2px 0 rgba(0,0,0,0.15); }
+  .btn-verify:disabled { opacity:0.5; cursor:default; transform:none; }
+
+  /* ── Feedback ── */
+  .feedback-bar {
+    flex-shrink:0; min-height:36px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    gap:6px; font-size:clamp(0.76rem,1.9vw,0.94rem); font-weight:700;
+    padding:6px 16px; transition:all 0.25s; text-align:center; width:100%;
+  }
+  .feedback-bar.hidden  { background:transparent; color:transparent; border:none; }
+  .feedback-bar.success { background:#D1FAE5; color:#065F46; border:2px solid #6EE7B7; }
+  .feedback-bar.error   { background:#FEE2E2; color:#7F1D1D; border:2px solid #FCA5A5; }
+
+  /* ── Shake animation ── */
+  @keyframes shake-input {
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-9px);}
+    40%{transform:translateX(9px);}
+    60%{transform:translateX(-6px);}
+    80%{transform:translateX(6px);}
+  }
+  .shake { animation: shake-input 0.42s ease; }
+
+  /* ── Result modal ── */
+  .result-screen { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.52); z-index:100; align-items:center; justify-content:center; }
+  .result-screen.show { display:flex; }
+  .result-box { background:white; border-radius:28px; padding:26px 34px 22px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.28); animation:pop-in 0.45s cubic-bezier(.34,1.56,.64,1); max-width:380px; width:90%; }
+  @keyframes pop-in { from{transform:scale(0.5);opacity:0;} to{transform:scale(1);opacity:1;} }
+  .res-emoji  { font-size:2.8rem; margin-bottom:4px; }
+  .res-title  { font-size:1.7rem; font-weight:700; color:#5B21B6; margin-bottom:8px; }
+  .score-circle { width:80px; height:80px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:700; box-shadow:0 4px 14px rgba(0,0,0,0.14); margin:0 auto 8px; }
+  .score-num  { font-size:2rem; line-height:1; }
+  .score-sm   { font-size:0.58rem; text-transform:uppercase; letter-spacing:0.08em; }
+  .res-detail { font-size:0.83rem; color:#666; margin-bottom:8px; }
+  .res-msg    { font-size:0.92rem; font-weight:700; color:#555; margin-bottom:10px; }
+  .res-tip    { background:#F5F3FF; border:2px solid #DDD6FE; border-radius:14px; padding:9px 12px; font-size:0.79rem; color:#5B21B6; font-weight:600; margin-bottom:16px; line-height:1.5; }
+  .btn-restart { background:linear-gradient(135deg,#A855F7,#7C3AED); color:white; border:none; border-radius:50px; padding:11px 32px; font-family:'Fredoka',sans-serif; font-size:1.05rem; font-weight:700; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,0.14); transition:transform 0.12s,box-shadow 0.12s; }
+  .btn-restart:hover { transform:translateY(-2px); box-shadow:0 6px 0 rgba(0,0,0,0.14); }
+
+  /* ── Confetti ── */
+  .confetti-piece { position:fixed; width:10px; height:10px; border-radius:2px; pointer-events:none; z-index:200; animation:cffall 1.8s ease-in forwards; }
+  @keyframes cffall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1;} 100%{transform:translateY(100vh) rotate(660deg);opacity:0;} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DECIFRE A MENSAGEM SECRETA</h1>
+  <p>USE A TABELA DOS SINAIS PARA DESCOBRIR A PALAVRA</p>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill"></div></div>
+  <div class="progress-label" id="prog-label">1 / 7</div>
+</div>
+
+<div class="stage">
+
+  <div class="sec-label">🔍 OLHE A TABELA DOS SINAIS:</div>
+  <div class="cipher-table" id="cipher-table"></div>
+
+  <div class="sec-label">📩 DECIFRE A MENSAGEM SECRETA:</div>
+  <div class="secret-row" id="secret-row"></div>
+
+  <div class="input-area">
+    <input
+      class="answer-input" id="answer-input"
+      type="text" maxlength="10"
+      placeholder="DIGITE AQUI"
+      autocomplete="off" autocorrect="off"
+      autocapitalize="characters" spellcheck="false"
+    />
+    <button class="btn-verify" id="btn-verify" onclick="verify()">✔ VERIFICAR</button>
+  </div>
+
+  <div class="feedback-bar hidden" id="feedback-bar"></div>
+
+</div>
+
+<!-- Result modal -->
+<div class="result-screen" id="result-screen">
+  <div class="result-box">
+    <div class="res-emoji"  id="res-emoji">🏆</div>
+    <div class="res-title"  id="res-title">INCRÍVEL!</div>
+    <div class="score-circle" id="score-circle">
+      <span class="score-num" id="score-num">10</span>
+      <span class="score-sm">NOTA</span>
+    </div>
+    <div class="res-msg"    id="res-msg">Você decifrou tudo!</div>
+    <div class="res-detail" id="res-detail">7 acertos · 0 erros</div>
+    <div class="res-tip">
+      🔐 <strong>Lembre-se:</strong> Símbolos e sinais guardam mensagens —<br>
+      quem conhece o código consegue ler tudo! 🌟
+    </div>
+    <button class="btn-restart" onclick="restart()">🔄 JOGAR DE NOVO</button>
+  </div>
+</div>
+
+<script>
+// ── Cifra: emoji → letra ──────────────────────────────────────────────────────
+const CIPHER = [
+  { emoji:'🍎', letter:'A' },
+  { emoji:'🍌', letter:'B' },
+  { emoji:'🌙', letter:'C' },
+  { emoji:'🐶', letter:'D' },
+  { emoji:'⭐', letter:'E' },
+  { emoji:'🌸', letter:'F' },
+  { emoji:'🦁', letter:'G' },
+  { emoji:'🌞', letter:'H' },
+  { emoji:'🎈', letter:'I' },
+  { emoji:'🍋', letter:'L' },
+  { emoji:'🎵', letter:'M' },
+  { emoji:'🌈', letter:'N' },
+  { emoji:'🍊', letter:'O' },
+  { emoji:'🦜', letter:'P' },
+  { emoji:'🚀', letter:'R' },
+  { emoji:'🌟', letter:'S' },
+  { emoji:'🐢', letter:'T' },
+  { emoji:'🦄', letter:'U' },
+  { emoji:'🍇', letter:'V' },
+];
+
+const letterMap = {};
+CIPHER.forEach(c => { letterMap[c.letter] = c.emoji; });
+function emoji(l) { return letterMap[l] || '❓'; }
+
+// ── Palavras ──────────────────────────────────────────────────────────────────
+const ALL_Q = [
+  { word:'GATO',  fun:'🐱 GATO! Um animal que ronrona e dorme muito!' },
+  { word:'BOLA',  fun:'⚽ BOLA! Ótima para brincar com os amigos!' },
+  { word:'LEAO',  fun:'🦁 LEÃO! O rei da selva!' },
+  { word:'MESA',  fun:'🪑 MESA! Onde a gente estuda e come!' },
+  { word:'FLOR',  fun:'🌸 FLOR! Tão colorida e cheirosa!' },
+  { word:'NUVEM', fun:'☁️ NUVEM! Feita de gotinhas de água no céu!' },
+  { word:'SAPO',  fun:'🐸 SAPO! Adora morar perto de rios!' },
+];
+
+// ── Estado ────────────────────────────────────────────────────────────────────
+let questions=[], current=0, score=0, totalErrors=0, errorsThis=0, errorsPerQ=[], answered=false;
+let audioCtx=null;
+
+// ── Audio ─────────────────────────────────────────────────────────────────────
+function getAC(){ if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function playTone(freqs,type,vol,step,dur){
+  try{ const ctx=getAC(); freqs.forEach((f,i)=>{
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value=f; o.type=type;
+    const t=ctx.currentTime+i*step;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+0.04);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.start(t); o.stop(t+dur);
+  }); }catch(e){}
+}
+const playOk  = ()=>playTone([523,659,784,1047],'sine',0.14,0.10,0.28);
+const playErr = ()=>playTone([200],'sawtooth',0.11,0,0.26);
+const playEnd = ()=>playTone([523,659,784,880,1047,1319],'sine',0.12,0.12,0.36);
+
+// ── Shuffle ───────────────────────────────────────────────────────────────────
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+// ── Nota ──────────────────────────────────────────────────────────────────────
+function calcNota(){
+  const N=questions.length, base=10/N; let pts=0;
+  errorsPerQ.forEach(e=>pts+=Math.max(0,base-e*0.5));
+  return Math.round(pts*10)/10;
+}
+
+// ── Montar questão ────────────────────────────────────────────────────────────
+function buildQ(){
+  answered=false; errorsThis=0;
+  const q=questions[current], N=questions.length;
+  const word=q.word;
+
+  // progresso
+  document.getElementById('prog-fill').style.width=(current/N*100)+'%';
+  document.getElementById('prog-label').textContent=`${current+1} / ${N}`;
+
+  // tabela: só as letras únicas desta palavra (ordenadas)
+  const usedLetters=[...new Set(word.split(''))].sort();
+  const tableEl=document.getElementById('cipher-table');
+  tableEl.innerHTML='';
+  usedLetters.forEach(l=>{
+    const card=document.createElement('div');
+    card.className='cipher-card';
+    card.innerHTML=`<div class="cipher-emoji">${emoji(l)}</div><div class="cipher-letter">${l}</div>`;
+    tableEl.appendChild(card);
+  });
+
+  // mensagem secreta (emojis da palavra — na ordem)
+  const secretEl=document.getElementById('secret-row');
+  secretEl.innerHTML='';
+  word.split('').forEach(l=>{
+    const d=document.createElement('div');
+    d.className='secret-emoji';
+    d.textContent=emoji(l);
+    secretEl.appendChild(d);
+  });
+
+  // limpar input e feedback
+  const inp=document.getElementById('answer-input');
+  inp.value=''; inp.disabled=false;
+  document.getElementById('btn-verify').disabled=false;
+  const fb=document.getElementById('feedback-bar');
+  fb.className='feedback-bar hidden'; fb.textContent='';
+
+  setTimeout(()=>inp.focus(), 80);
+}
+
+// ── Verificar ─────────────────────────────────────────────────────────────────
+function verify(){
+  if(answered) return;
+  const q=questions[current];
+  const inp=document.getElementById('answer-input');
+  const typed=inp.value.trim().toUpperCase().replace(/\s/g,'');
+  const fb=document.getElementById('feedback-bar');
+
+  if(!typed){
+    fb.className='feedback-bar error';
+    fb.textContent='❌  Escreva a palavra que você descobriu!';
+    return;
+  }
+
+  if(typed===q.word){
+    // ✅ ACERTO
+    answered=true;
+    errorsPerQ.push(errorsThis);
+    if(errorsThis===0) score++;
+    playOk();
+    inp.disabled=true;
+    document.getElementById('btn-verify').disabled=true;
+    fb.className='feedback-bar success';
+    fb.textContent='✅  '+q.fun;
+    document.getElementById('prog-fill').style.width=((current+1)/questions.length*100)+'%';
+    setTimeout(()=>{ current++; if(current>=questions.length) showResult(); else buildQ(); }, 2000);
+  } else {
+    // ❌ ERRO
+    errorsThis++; totalErrors++;
+    playErr();
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    fb.className='feedback-bar error';
+    fb.textContent=`❌  Não é "${typed}". Olhe bem a tabela e tente de novo!`;
+    setTimeout(()=>{ inp.value=''; inp.classList.remove('shake'); inp.focus(); }, 460);
+  }
+}
+
+// Enter para verificar
+document.addEventListener('keydown', e=>{ if(e.key==='Enter') verify(); });
+
+// ── Resultado ─────────────────────────────────────────────────────────────────
+function showResult(){
+  playEnd(); spawnConfetti();
+  const nota=calcNota();
+  const notaFmt=Number.isInteger(nota)?nota.toString():nota.toFixed(1);
+  let emoji2,title,msg,bg,tc;
+  if(nota>=9){emoji2='🏆';title='INCRÍVEL!';msg='Você decifrou tudo!';bg='#7C3AED';tc='white';}
+  else if(nota>=7){emoji2='🌟';title='MUITO BEM!';msg='Você foi muito bem!';bg='#F59E0B';tc='white';}
+  else if(nota>=5){emoji2='😊';title='BOM TRABALHO!';msg='Continue praticando!';bg='#3B82F6';tc='white';}
+  else{emoji2='💪';title='TENTE DE NOVO!';msg='Cada tentativa é aprendizado!';bg='#EF4444';tc='white';}
+  document.getElementById('res-emoji').textContent=emoji2;
+  document.getElementById('res-title').textContent=title;
+  document.getElementById('score-num').textContent=notaFmt;
+  document.getElementById('res-msg').textContent=msg;
+  document.getElementById('res-detail').textContent=
+    `${score} acerto${score!==1?'s':''} em ${questions.length} palavras · ${totalErrors} erro${totalErrors!==1?'s':''}`;
+  const c=document.getElementById('score-circle'); c.style.background=bg; c.style.color=tc;
+  document.getElementById('result-screen').classList.add('show');
+}
+
+// ── Confetti ──────────────────────────────────────────────────────────────────
+function spawnConfetti(){
+  const cols=['#FFD93D','#FF6B6B','#5BC8F5','#6BCB77','#B388FF','#A855F7'];
+  for(let i=0;i<55;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.left=Math.random()*100+'vw';
+    el.style.top='-10px';
+    el.style.background=cols[Math.floor(Math.random()*cols.length)];
+    el.style.animationDelay=Math.random()*0.7+'s';
+    el.style.animationDuration=(1.1+Math.random()*0.8)+'s';
+    el.style.borderRadius=Math.random()>0.5?'50%':'2px';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2800);
+  }
+}
+
+// ── Reiniciar ─────────────────────────────────────────────────────────────────
+function restart(){
+  document.getElementById('result-screen').classList.remove('show');
+  init();
+}
+
+function init(){
+  questions=shuffle(ALL_Q);
+  current=0; score=0; totalErrors=0; errorsPerQ=[];
+  buildQ();
+}
+
+init();
+</script>
+</body>
+</html>
